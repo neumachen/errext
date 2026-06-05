@@ -1,4 +1,4 @@
-package errorx
+package errext
 
 import (
 	"bytes"
@@ -81,11 +81,11 @@ func (s StackFrame) String() string {
 // debug aid and avoid invoking it on hot paths or untrusted file paths.
 func (s *StackFrame) SourceLine() (string, error) {
 	if s.File == "" {
-		return "", errors.New("errorx: StackFrame.SourceLine: no file recorded")
+		return "", errors.New("errext: StackFrame.SourceLine: no file recorded")
 	}
 	data, err := os.ReadFile(s.File)
 	if err != nil {
-		return "", fmt.Errorf("errorx: SourceLine: %w", err)
+		return "", fmt.Errorf("errext: SourceLine: %w", err)
 	}
 	lines := bytes.Split(data, []byte{'\n'})
 	if s.LineNumber <= 0 || s.LineNumber >= len(lines) {

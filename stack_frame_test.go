@@ -1,11 +1,11 @@
-package errorx_test
+package errext_test
 
 import (
 	"runtime"
 	"strings"
 	"testing"
 
-	"github.com/neumachen/errorx"
+	"github.com/neumachen/errext"
 )
 
 func TestNewStackFrame(t *testing.T) {
@@ -15,12 +15,12 @@ func TestNewStackFrame(t *testing.T) {
 	}
 
 	t.Run("valid pc", func(t *testing.T) {
-		f := errorx.NewStackFrame(pc)
+		f := errext.NewStackFrame(pc)
 		if f.Func() == nil {
 			t.Fatal("Func() = nil for valid pc")
 		}
-		if !strings.Contains(f.Package, "errorx_test") {
-			t.Errorf("Package = %q, want contains errorx_test", f.Package)
+		if !strings.Contains(f.Package, "errext_test") {
+			t.Errorf("Package = %q, want contains errext_test", f.Package)
 		}
 		if f.Name == "" {
 			t.Errorf("Name empty")
@@ -34,7 +34,7 @@ func TestNewStackFrame(t *testing.T) {
 	})
 
 	t.Run("zero pc", func(t *testing.T) {
-		f := errorx.NewStackFrame(0)
+		f := errext.NewStackFrame(0)
 		if f.Func() != nil {
 			t.Errorf("Func() should be nil for zero pc")
 		}
@@ -46,7 +46,7 @@ func TestStackFrame_StringDoesNotReadSource(t *testing.T) {
 	if !ok {
 		t.Fatal("runtime.Caller failed")
 	}
-	f := errorx.NewStackFrame(pc)
+	f := errext.NewStackFrame(pc)
 	s := f.String()
 
 	// String should reference the file path...
@@ -73,7 +73,7 @@ func TestStackFrame_SourceLine(t *testing.T) {
 	if !ok {
 		t.Fatal("runtime.Caller failed")
 	}
-	f := errorx.NewStackFrame(pc)
+	f := errext.NewStackFrame(pc)
 	line, err := f.SourceLine()
 	if err != nil {
 		t.Fatalf("SourceLine: %v", err)

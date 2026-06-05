@@ -24,3 +24,9 @@
 **/*.a
 **/*.test
 **/*.prof
+
+# AiderDesk / Aider / Claude session artifacts (not part of the module)
+.aider-desk/
+.aider.input.history
+.aider.tags.cache.v4/
+.claude/

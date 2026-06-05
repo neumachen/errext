@@ -1,11 +1,11 @@
-package errorx_test
+package errext_test
 
 import (
 	"reflect"
 	"runtime/debug"
 	"testing"
 
-	"github.com/neumachen/errorx"
+	"github.com/neumachen/errext"
 )
 
 var createdBy = `panic: hello!
@@ -55,7 +55,7 @@ net/http.(*Server).Serve(0xc20806c780, 0x910c88, 0xc20803e168, 0x0, 0x0)
 	/0/c/go/src/pkg/net/http/server.go:1698 +0x91
 `
 
-var baseFrames = []errorx.StackFrame{
+var baseFrames = []errext.StackFrame{
 	{
 		File:       "/0/c/go/src/pkg/runtime/panic.c",
 		LineNumber: 279,
@@ -76,8 +76,8 @@ var baseFrames = []errorx.StackFrame{
 	},
 }
 
-var createdByExpected = append(append([]errorx.StackFrame{}, baseFrames...),
-	errorx.StackFrame{
+var createdByExpected = append(append([]errext.StackFrame{}, baseFrames...),
+	errext.StackFrame{
 		File:       "/0/go/src/github.com/neumachen/testgo/webkit/g/app/controllers/app.go",
 		LineNumber: 14,
 		Name:       "App.Index",
@@ -88,7 +88,7 @@ func TestParsePanic(t *testing.T) {
 	cases := []struct {
 		name  string
 		input string
-		want  []errorx.StackFrame
+		want  []errext.StackFrame
 	}{
 		{name: "createdBy", input: createdBy, want: createdByExpected},
 		{name: "normalSplit", input: normalSplit, want: baseFrames},
@@ -97,7 +97,7 @@ func TestParsePanic(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			errx, err := errorx.ParsePanic(tc.input)
+			errx, err := errext.ParsePanic(tc.input)
 			if err != nil {
 				t.Fatalf("ParsePanic(%s): %v", tc.name, err)
 			}
@@ -126,7 +126,7 @@ func TestParsePanicEmptyAndGarbage(t *testing.T) {
 		"panic: x\n\ngoroutine 1 [running]:\nonly one half",
 	}
 	for _, in := range cases {
-		_, err := errorx.ParsePanic(in)
+		_, err := errext.ParsePanic(in)
 		if err == nil {
 			t.Errorf("ParsePanic(%q) returned nil error; want error", in)
 		}
@@ -134,11 +134,11 @@ func TestParsePanicEmptyAndGarbage(t *testing.T) {
 }
 
 func TestFromPanicRecover(t *testing.T) {
-	var err *errorx.TraceError
+	var err *errext.TraceError
 	func() {
 		defer func() {
 			if r := recover(); r != nil {
-				err = errorx.FromPanic(r, debug.Stack())
+				err = errext.FromPanic(r, debug.Stack())
 			}
 		}()
 		panic("boom")
@@ -159,7 +159,7 @@ func TestFromPanicRecover(t *testing.T) {
 }
 
 func TestFromPanicNoStackArgumentCapturesFromCaller(t *testing.T) {
-	err := errorx.FromPanic("oops", nil)
+	err := errext.FromPanic("oops", nil)
 	if err == nil {
 		t.Fatal("FromPanic returned nil")
 	}
@@ -184,7 +184,7 @@ func FuzzParsePanic(f *testing.F) {
 	f.Add(string(debug.Stack()))
 
 	f.Fuzz(func(t *testing.T, s string) {
-		got, err := errorx.ParsePanic(s)
+		got, err := errext.ParsePanic(s)
 		if err != nil && got != nil {
 			t.Fatalf("ParsePanic returned (non-nil, non-nil) for %q", s)
 		}
