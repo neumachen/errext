@@ -1,4 +1,4 @@
-package errorx
+package errext
 
 import (
 	"bytes"
@@ -204,7 +204,7 @@ func Is(err, target error) bool {
 //
 //	defer func() {
 //	    if r := recover(); r != nil {
-//	        err = errorx.FromPanic(r, debug.Stack())
+//	        err = errext.FromPanic(r, debug.Stack())
 //	    }
 //	}()
 func FromPanic(value any, stack []byte) *TraceError {
@@ -385,7 +385,7 @@ func (e *TraceError) Metadata() *json.RawMessage {
 // unchanged. SetMetadata is safe for concurrent use.
 func (e *TraceError) SetMetadata(metadata *json.RawMessage) error {
 	if e == nil {
-		return errors.New("errorx: SetMetadata on nil *TraceError")
+		return errors.New("errext: SetMetadata on nil *TraceError")
 	}
 	if metadata == nil {
 		e.mu.Lock()
@@ -394,7 +394,7 @@ func (e *TraceError) SetMetadata(metadata *json.RawMessage) error {
 		return nil
 	}
 	if !json.Valid(*metadata) {
-		return errors.New("errorx: invalid metadata: not valid JSON")
+		return errors.New("errext: invalid metadata: not valid JSON")
 	}
 	clone := make(json.RawMessage, len(*metadata))
 	copy(clone, *metadata)
@@ -502,6 +502,6 @@ func (e *TraceError) Format(s fmt.State, verb rune) {
 	case 'q':
 		_, _ = fmt.Fprintf(s, "%q", e.Error())
 	default:
-		_, _ = fmt.Fprintf(s, "%%!%c(errorx.TraceError=%s)", verb, e.Error())
+		_, _ = fmt.Fprintf(s, "%%!%c(errext.TraceError=%s)", verb, e.Error())
 	}
 }

@@ -1,4 +1,4 @@
-package errorx_test
+package errext_test
 
 import (
 	"encoding/json"
@@ -6,31 +6,31 @@ import (
 	"log/slog"
 	"testing"
 
-	"github.com/neumachen/errorx"
+	"github.com/neumachen/errext"
 )
 
 var errBench = errors.New("sentinel")
 
 func BenchmarkNewError(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = errorx.NewError(errBench)
+		_ = errext.NewError(errBench)
 	}
 }
 
 func BenchmarkWrap(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = errorx.Wrap(errBench, 0)
+		_ = errext.Wrap(errBench, 0)
 	}
 }
 
 func BenchmarkWrapPrefix(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_ = errorx.WrapPrefix(errBench, "ctx", 0)
+		_ = errext.WrapPrefix(errBench, "ctx", 0)
 	}
 }
 
 func BenchmarkError(b *testing.B) {
-	err := errorx.WrapPrefix(errBench, "ctx", 0)
+	err := errext.WrapPrefix(errBench, "ctx", 0)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = err.Error()
@@ -38,7 +38,7 @@ func BenchmarkError(b *testing.B) {
 }
 
 func BenchmarkErrorsIs(b *testing.B) {
-	err := errorx.Wrap(errBench, 0)
+	err := errext.Wrap(errBench, 0)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = errors.Is(err, errBench)
@@ -48,13 +48,13 @@ func BenchmarkErrorsIs(b *testing.B) {
 func BenchmarkStackFramesFirstCall(b *testing.B) {
 	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		err := errorx.NewError(errBench)
+		err := errext.NewError(errBench)
 		_ = err.StackFrames()
 	}
 }
 
 func BenchmarkStackFramesRepeated(b *testing.B) {
-	err := errorx.NewError(errBench)
+	err := errext.NewError(errBench)
 	_ = err.StackFrames()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -63,7 +63,7 @@ func BenchmarkStackFramesRepeated(b *testing.B) {
 }
 
 func BenchmarkRuntimeStack(b *testing.B) {
-	err := errorx.NewError(errBench)
+	err := errext.NewError(errBench)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = err.RuntimeStack()
@@ -71,7 +71,7 @@ func BenchmarkRuntimeStack(b *testing.B) {
 }
 
 func BenchmarkMarshalJSON(b *testing.B) {
-	err := errorx.NewError(errBench)
+	err := errext.NewError(errBench)
 	md := json.RawMessage(`{"k":"v"}`)
 	if e := err.SetMetadata(&md); e != nil {
 		b.Fatal(e)
@@ -85,8 +85,8 @@ func BenchmarkMarshalJSON(b *testing.B) {
 }
 
 func BenchmarkLogValue(b *testing.B) {
-	err := errorx.NewError(errBench)
-	te := err.(*errorx.TraceError)
+	err := errext.NewError(errBench)
+	te := err.(*errext.TraceError)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = te.LogValue()
@@ -94,7 +94,7 @@ func BenchmarkLogValue(b *testing.B) {
 }
 
 func BenchmarkSetMetadata(b *testing.B) {
-	err := errorx.NewError(errBench)
+	err := errext.NewError(errBench)
 	md := json.RawMessage(`{"k":"v"}`)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -105,7 +105,7 @@ func BenchmarkSetMetadata(b *testing.B) {
 }
 
 func BenchmarkUnmarshalMetadata(b *testing.B) {
-	err := errorx.NewError(errBench)
+	err := errext.NewError(errBench)
 	md := json.RawMessage(`{"key":"value","n":42}`)
 	if e := err.SetMetadata(&md); e != nil {
 		b.Fatal(e)
@@ -126,7 +126,7 @@ func BenchmarkUnmarshalMetadata(b *testing.B) {
 // BenchmarkLogValueWithSlogHandler measures end-to-end slog throughput with
 // a TraceError attribute.
 func BenchmarkLogValueWithSlogHandler(b *testing.B) {
-	err := errorx.NewError(errBench)
+	err := errext.NewError(errBench)
 	logger := slog.New(slog.NewJSONHandler(devNullWriter{}, nil))
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

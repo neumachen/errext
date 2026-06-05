@@ -1,4 +1,4 @@
-package errorx_test
+package errext_test
 
 import (
 	"encoding/json"
@@ -7,13 +7,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/neumachen/errorx"
+	"github.com/neumachen/errext"
 )
 
 // TestConcurrentReadsAndMetadataWrites exercises every concurrent-safe
 // method simultaneously. Run with -race for the assertion to bite.
 func TestConcurrentReadsAndMetadataWrites(t *testing.T) {
-	err := errorx.WrapPrefix(fmt.Errorf("root cause"), "ctx", 0)
+	err := errext.WrapPrefix(fmt.Errorf("root cause"), "ctx", 0)
 
 	const goroutines = 16
 	const iterations = 200
@@ -54,10 +54,10 @@ func TestConcurrentReadsAndMetadataWrites(t *testing.T) {
 // TestConcurrentStackFramesIdempotent ensures concurrent first-call resolves
 // produce a consistent frame slice.
 func TestConcurrentStackFramesIdempotent(t *testing.T) {
-	err := errorx.NewError(errors.New("x"))
+	err := errext.NewError(errors.New("x"))
 
 	const goroutines = 32
-	results := make([][]errorx.StackFrame, goroutines)
+	results := make([][]errext.StackFrame, goroutines)
 
 	var wg sync.WaitGroup
 	wg.Add(goroutines)

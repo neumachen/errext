@@ -1,4 +1,4 @@
-package errorx_test
+package errext_test
 
 import (
 	"bytes"
@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neumachen/errorx"
+	"github.com/neumachen/errext"
 )
 
 func TestLogValueIncludesStructuredFields(t *testing.T) {
-	err := errorx.WrapPrefix(fmt.Errorf("root cause"), "ctx", 0)
+	err := errext.WrapPrefix(fmt.Errorf("root cause"), "ctx", 0)
 	md := json.RawMessage(`{"req_id":"abc-123"}`)
 	if e := err.SetMetadata(&md); e != nil {
 		t.Fatalf("SetMetadata: %v", e)
@@ -55,7 +55,7 @@ func TestLogValueIncludesStructuredFields(t *testing.T) {
 }
 
 func TestLogValueEmptyForNilTraceError(t *testing.T) {
-	var te *errorx.TraceError
+	var te *errext.TraceError
 	v := te.LogValue()
 	if v.Kind() != slog.KindAny || v.Any() != nil {
 		// Either a zero Value or an empty group is acceptable; we just

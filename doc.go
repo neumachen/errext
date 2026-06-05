@@ -1,5 +1,5 @@
 /*
-Package errorx is a small, dependency-free extension of Go's standard
+Package errext is a small, dependency-free extension of Go's standard
 errors package. It adds stack-trace capture, contextual prefix wrapping,
 structured JSON / log/slog output, optional caller-supplied metadata, and
 panic-recovery helpers, while preserving standard errors.Is / errors.As /
@@ -7,18 +7,18 @@ errors.Unwrap semantics.
 
 # Quick start
 
-	err := errorx.Errorf("failed to process %s: %w", item, cause)
+	err := errext.Errorf("failed to process %s: %w", item, cause)
 
 	if errors.Is(err, cause) {
-	    // standard errors.Is sees through errorx wrappers
+	    // standard errors.Is sees through errext wrappers
 	}
 
 	// Add context without mutating the wrapped error:
-	wrapped := errorx.WrapPrefix(err, "validation failed", 0)
+	wrapped := errext.WrapPrefix(err, "validation failed", 0)
 
 	// Attach structured metadata (validated as JSON at set time):
 	md := json.RawMessage(`{"request_id":"abc-123"}`)
-	wrapped.(*errorx.TraceError).SetMetadata(&md)
+	wrapped.(*errext.TraceError).SetMetadata(&md)
 
 # Core type
 
@@ -45,7 +45,7 @@ It implements error, fmt.Formatter, json.Marshaler, and slog.LogValuer.
     mutate the returned slices.
   - Default stack formatting no longer reads source files from disk. The
     opt-in StackFrame.SourceLine helper remains for explicit callers.
-  - errorx.Is is a thin wrapper around errors.Is.
+  - errext.Is is a thin wrapper around errors.Is.
 
 # Structured output
 
@@ -77,4 +77,4 @@ metadata may contain caller-controlled data. Do not expose the full
 structured representation to untrusted clients without first considering
 whether the contents are safe to disclose.
 */
-package errorx
+package errext

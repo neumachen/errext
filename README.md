@@ -1,7 +1,7 @@
-# errorx
+# errext
 
-[![test](https://github.com/neumachen/errorx/actions/workflows/test.yml/badge.svg)](https://github.com/neumachen/errorx/actions/workflows/test.yml)
-[![lint](https://github.com/neumachen/errorx/actions/workflows/lint.yml/badge.svg)](https://github.com/neumachen/errorx/actions/workflows/lint.yml)
+[![test](https://github.com/neumachen/errext/actions/workflows/test.yml/badge.svg)](https://github.com/neumachen/errext/actions/workflows/test.yml)
+[![lint](https://github.com/neumachen/errext/actions/workflows/lint.yml/badge.svg)](https://github.com/neumachen/errext/actions/workflows/lint.yml)
 
 A small, standard-library-only Go error package that extends `errors` with
 stack-trace capture, contextual prefix wrapping, structured JSON / `log/slog`
@@ -11,14 +11,14 @@ preserves `errors.Is` / `errors.As` / `errors.Unwrap` through every wrapper.
 ## Install
 
 ```bash
-go get github.com/neumachen/errorx
+go get github.com/neumachen/errext
 ```
 
 Minimum Go version: 1.24.
 
 ## Why
 
-`errorx` aims to be the smallest useful extension to `errors`:
+`errext` aims to be the smallest useful extension to `errors`:
 
 - enriched error values without a logging-framework dependency,
 - standard error semantics (`Unwrap`, `Is`, `As`, `fmt.Errorf %w`),
@@ -35,14 +35,14 @@ import (
     "errors"
     "fmt"
 
-    "github.com/neumachen/errorx"
+    "github.com/neumachen/errext"
 )
 
 var ErrNotFound = errors.New("not found")
 
 func lookup(id string) error {
     if id == "" {
-        return errorx.Errorf("lookup %q: %w", id, ErrNotFound)
+        return errext.Errorf("lookup %q: %w", id, ErrNotFound)
     }
     // ...
     return nil
@@ -54,7 +54,7 @@ func main() {
     fmt.Println(errors.Is(err, ErrNotFound)) // true
 
     // Add context without mutating the wrapped error.
-    wrapped := errorx.WrapPrefix(err, "user lookup", 0).(*errorx.TraceError)
+    wrapped := errext.WrapPrefix(err, "user lookup", 0).(*errext.TraceError)
 
     // Attach JSON metadata. Validation happens at set time.
     md := json.RawMessage(`{"request_id":"abc-123"}`)
@@ -74,11 +74,11 @@ func main() {
   conversion of a success path into a failure path.
 - **Wrapping never mutates the wrapped error.** Each `Wrap` / `WrapPrefix`
   captures a fresh stack and returns a new `*TraceError`. The wrapped value
-  is reachable via `Unwrap` and the deepest non-`errorx` cause is available
+  is reachable via `Unwrap` and the deepest non-`errext` cause is available
   via `Cause`.
 - **Standard `errors` integration.** `errors.Is`, `errors.As`,
   `errors.Unwrap`, and `fmt.Errorf("…: %w", err)` all work through the
-  wrappers. `errorx.Is` is a thin wrapper around `errors.Is`.
+  wrappers. `errext.Is` is a thin wrapper around `errors.Is`.
 - **Immutable from the caller's perspective.** `Stack()`, `StackFrames()`,
   and `Metadata()` return copies; mutating them does not affect the error.
 - **Concurrency safe.** All read methods are safe under concurrent use.
@@ -180,7 +180,7 @@ import "runtime/debug"
 func doWork() (err error) {
     defer func() {
         if r := recover(); r != nil {
-            err = errorx.FromPanic(r, debug.Stack())
+            err = errext.FromPanic(r, debug.Stack())
         }
     }()
     // ...

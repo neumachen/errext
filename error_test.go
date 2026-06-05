@@ -1,4 +1,4 @@
-package errorx_test
+package errext_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/neumachen/errorx"
+	"github.com/neumachen/errext"
 )
 
 func TestNewError(t *testing.T) {
@@ -40,7 +40,7 @@ func TestNewError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := errorx.NewError(tt.input)
+			err := errext.NewError(tt.input)
 			if tt.wantNil {
 				if err != nil {
 					t.Fatalf("NewError(nil) = %v, want nil", err)
@@ -64,13 +64,13 @@ func TestNewError(t *testing.T) {
 }
 
 func TestNilHandling(t *testing.T) {
-	if got := errorx.NewError(nil); got != nil {
+	if got := errext.NewError(nil); got != nil {
 		t.Errorf("NewError(nil) = %v, want nil", got)
 	}
-	if got := errorx.Wrap(nil, 0); got != nil {
+	if got := errext.Wrap(nil, 0); got != nil {
 		t.Errorf("Wrap(nil, 0) = %v, want nil", got)
 	}
-	if got := errorx.WrapPrefix(nil, "p", 0); got != nil {
+	if got := errext.WrapPrefix(nil, "p", 0); got != nil {
 		t.Errorf("WrapPrefix(nil, ...) = %v, want nil", got)
 	}
 }
@@ -79,17 +79,17 @@ func TestErrorsIsAndAs(t *testing.T) {
 	sentinel := errors.New("sentinel")
 
 	t.Run("Is through Wrap", func(t *testing.T) {
-		wrapped := errorx.Wrap(sentinel, 0)
+		wrapped := errext.Wrap(sentinel, 0)
 		if !errors.Is(wrapped, sentinel) {
 			t.Errorf("errors.Is(Wrap(sentinel), sentinel) = false")
 		}
-		if !errorx.Is(wrapped, sentinel) {
-			t.Errorf("errorx.Is(Wrap(sentinel), sentinel) = false")
+		if !errext.Is(wrapped, sentinel) {
+			t.Errorf("errext.Is(Wrap(sentinel), sentinel) = false")
 		}
 	})
 
 	t.Run("Is through WrapPrefix", func(t *testing.T) {
-		wrapped := errorx.WrapPrefix(sentinel, "ctx", 0)
+		wrapped := errext.WrapPrefix(sentinel, "ctx", 0)
 		if !errors.Is(wrapped, sentinel) {
 			t.Errorf("errors.Is(WrapPrefix(sentinel), sentinel) = false")
 		}
@@ -97,7 +97,7 @@ func TestErrorsIsAndAs(t *testing.T) {
 
 	t.Run("As through Wrap", func(t *testing.T) {
 		typed := &customErr{code: 42}
-		wrapped := errorx.Wrap(typed, 0)
+		wrapped := errext.Wrap(typed, 0)
 		var target *customErr
 		if !errors.As(wrapped, &target) {
 			t.Fatalf("errors.As did not find *customErr through Wrap")
@@ -109,14 +109,14 @@ func TestErrorsIsAndAs(t *testing.T) {
 
 	t.Run("Is through nested wrappers", func(t *testing.T) {
 		inner := fmt.Errorf("layer1: %w", sentinel)
-		outer := errorx.Wrap(inner, 0)
+		outer := errext.Wrap(inner, 0)
 		if !errors.Is(outer, sentinel) {
 			t.Errorf("errors.Is did not traverse fmt.Errorf %%w through Wrap")
 		}
 	})
 
 	t.Run("Is nil-nil", func(t *testing.T) {
-		if !errorx.Is(nil, nil) {
+		if !errext.Is(nil, nil) {
 			t.Errorf("Is(nil, nil) = false, want true")
 		}
 	})
@@ -128,12 +128,12 @@ func (c *customErr) Error() string { return fmt.Sprintf("custom err: %d", c.code
 
 func TestWrapDoesNotMutateExisting(t *testing.T) {
 	base := errors.New("base error")
-	inner := errorx.WrapPrefix(base, "inner", 0)
+	inner := errext.WrapPrefix(base, "inner", 0)
 	originalMsg := inner.Error()
 	originalPrefix := inner.Prefix()
 	originalStack := inner.Stack()
 
-	outer := errorx.WrapPrefix(inner, "outer", 0)
+	outer := errext.WrapPrefix(inner, "outer", 0)
 
 	if inner.Error() != originalMsg {
 		t.Errorf("inner.Error() changed: got %q, want %q", inner.Error(), originalMsg)
@@ -172,16 +172,16 @@ func TestWrapPrefix(t *testing.T) {
 		},
 		{
 			name:     "multiple prefixes",
-			err:      errorx.WrapPrefix(fmt.Errorf("base error"), "prefix1", 0),
+			err:      errext.WrapPrefix(fmt.Errorf("base error"), "prefix1", 0),
 			prefix:   "prefix2",
 			wantMsg:  "prefix2: prefix1: base error",
-			wantType: "*errorx.TraceError",
+			wantType: "*errext.TraceError",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := errorx.WrapPrefix(tt.err, tt.prefix, 0)
+			err := errext.WrapPrefix(tt.err, tt.prefix, 0)
 			if err == nil {
 				t.Fatal("WrapPrefix returned nil")
 			}
@@ -228,7 +228,7 @@ func TestWrap(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := errorx.Wrap(tt.err, tt.skip)
+			err := errext.Wrap(tt.err, tt.skip)
 			if err == nil {
 				t.Fatal("Wrap returned nil")
 			}
@@ -257,7 +257,7 @@ func TestErrorf(t *testing.T) {
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			err := errorx.Errorf(c.format, c.args...)
+			err := errext.Errorf(c.format, c.args...)
 			if err == nil {
 				t.Fatal("Errorf returned nil")
 			}
@@ -273,14 +273,14 @@ func TestErrorf(t *testing.T) {
 
 func TestErrorfPreservesWrap(t *testing.T) {
 	sentinel := errors.New("sentinel")
-	err := errorx.Errorf("ctx: %w", sentinel)
+	err := errext.Errorf("ctx: %w", sentinel)
 	if !errors.Is(err, sentinel) {
 		t.Errorf("errors.Is did not see through Errorf %%w")
 	}
 }
 
 func TestNewErrorfAliasOfErrorf(t *testing.T) {
-	err := errorx.NewErrorf("legacy %s", "spelling")
+	err := errext.NewErrorf("legacy %s", "spelling")
 	if err == nil || err.Error() != "legacy spelling" {
 		t.Errorf("NewErrorf failed: %v", err)
 	}
@@ -288,8 +288,8 @@ func TestNewErrorfAliasOfErrorf(t *testing.T) {
 
 func TestCauseReturnsRoot(t *testing.T) {
 	root := errors.New("root")
-	wrapped := errorx.WrapPrefix(errorx.Wrap(root, 0), "ctx", 0)
-	te, ok := wrapped.(*errorx.TraceError)
+	wrapped := errext.WrapPrefix(errext.Wrap(root, 0), "ctx", 0)
+	te, ok := wrapped.(*errext.TraceError)
 	if !ok {
 		t.Fatalf("WrapPrefix returned %T, want *TraceError", wrapped)
 	}
@@ -300,8 +300,8 @@ func TestCauseReturnsRoot(t *testing.T) {
 
 func TestUnwrapReturnsImmediate(t *testing.T) {
 	root := errors.New("root")
-	inner := errorx.Wrap(root, 0)
-	outer := errorx.WrapPrefix(inner, "ctx", 0)
+	inner := errext.Wrap(root, 0)
+	outer := errext.WrapPrefix(inner, "ctx", 0)
 
 	got := errors.Unwrap(outer)
 	if got != inner {
@@ -310,12 +310,12 @@ func TestUnwrapReturnsImmediate(t *testing.T) {
 }
 
 func TestStackFramesReturnsCopy(t *testing.T) {
-	err := errorx.NewError(errors.New("x"))
+	err := errext.NewError(errors.New("x"))
 	a := err.StackFrames()
 	if len(a) == 0 {
 		t.Fatal("no frames")
 	}
-	a[0] = errorx.StackFrame{Name: "tampered"}
+	a[0] = errext.StackFrame{Name: "tampered"}
 	b := err.StackFrames()
 	if b[0].Name == "tampered" {
 		t.Errorf("StackFrames did not return a copy: mutation leaked into internal state")
@@ -323,7 +323,7 @@ func TestStackFramesReturnsCopy(t *testing.T) {
 }
 
 func TestStackReturnsCopy(t *testing.T) {
-	err := errorx.NewError(errors.New("x"))
+	err := errext.NewError(errors.New("x"))
 	a := err.Stack()
 	if len(a) == 0 {
 		t.Fatal("no pcs")
@@ -336,7 +336,7 @@ func TestStackReturnsCopy(t *testing.T) {
 }
 
 func TestMetadataReturnsCopy(t *testing.T) {
-	err := errorx.NewError(errors.New("x"))
+	err := errext.NewError(errors.New("x"))
 	md := json.RawMessage(`{"a":1}`)
 	if e := err.SetMetadata(&md); e != nil {
 		t.Fatalf("SetMetadata: %v", e)
@@ -354,14 +354,14 @@ func TestMetadataReturnsCopy(t *testing.T) {
 
 func TestMetadataValidation(t *testing.T) {
 	t.Run("valid", func(t *testing.T) {
-		err := errorx.NewError(errors.New("x"))
+		err := errext.NewError(errors.New("x"))
 		md := json.RawMessage(`{"k":"v"}`)
 		if e := err.SetMetadata(&md); e != nil {
 			t.Errorf("SetMetadata(valid) returned error: %v", e)
 		}
 	})
 	t.Run("nil clears", func(t *testing.T) {
-		err := errorx.NewError(errors.New("x"))
+		err := errext.NewError(errors.New("x"))
 		md := json.RawMessage(`{"k":"v"}`)
 		if e := err.SetMetadata(&md); e != nil {
 			t.Fatalf("SetMetadata: %v", e)
@@ -374,7 +374,7 @@ func TestMetadataValidation(t *testing.T) {
 		}
 	})
 	t.Run("invalid is rejected at set time", func(t *testing.T) {
-		err := errorx.NewError(errors.New("x"))
+		err := errext.NewError(errors.New("x"))
 		good := json.RawMessage(`{"a":1}`)
 		if e := err.SetMetadata(&good); e != nil {
 			t.Fatalf("seed metadata: %v", e)
@@ -396,7 +396,7 @@ func TestUnmarshalMetadata(t *testing.T) {
 			Key   string `json:"key"`
 			Value int    `json:"value"`
 		}
-		err := errorx.NewError(errors.New("x"))
+		err := errext.NewError(errors.New("x"))
 		md := json.RawMessage(`{"key":"test","value":123}`)
 		if e := err.SetMetadata(&md); e != nil {
 			t.Fatalf("SetMetadata: %v", e)
@@ -411,7 +411,7 @@ func TestUnmarshalMetadata(t *testing.T) {
 	})
 	t.Run("absent", func(t *testing.T) {
 		var w struct{ Key string }
-		err := errorx.NewError(errors.New("x"))
+		err := errext.NewError(errors.New("x"))
 		if e := err.UnmarshalMetadata(&w); e != nil {
 			t.Errorf("UnmarshalMetadata(no metadata) returned error: %v", e)
 		}
@@ -422,7 +422,7 @@ func TestUnmarshalMetadata(t *testing.T) {
 }
 
 func TestMarshalJSONRecord(t *testing.T) {
-	err := errorx.WrapPrefix(fmt.Errorf("root cause"), "ctx", 0)
+	err := errext.WrapPrefix(fmt.Errorf("root cause"), "ctx", 0)
 	md := json.RawMessage(`{"req":"abc"}`)
 	if e := err.SetMetadata(&md); e != nil {
 		t.Fatalf("SetMetadata: %v", e)
@@ -462,7 +462,7 @@ func TestMarshalJSONRecord(t *testing.T) {
 }
 
 func TestMarshalJSONNilTraceError(t *testing.T) {
-	var te *errorx.TraceError
+	var te *errext.TraceError
 	raw, err := json.Marshal(te)
 	if err != nil {
 		t.Fatalf("Marshal(nil *TraceError): %v", err)
@@ -473,8 +473,8 @@ func TestMarshalJSONNilTraceError(t *testing.T) {
 }
 
 func TestFormatVerbs(t *testing.T) {
-	err := errorx.WrapPrefix(fmt.Errorf("base"), "ctx", 0)
-	te := err.(*errorx.TraceError)
+	err := errext.WrapPrefix(fmt.Errorf("base"), "ctx", 0)
+	te := err.(*errext.TraceError)
 
 	if got := fmt.Sprintf("%s", te); got != "ctx: base" {
 		t.Errorf("%%s = %q", got)
@@ -489,17 +489,17 @@ func TestFormatVerbs(t *testing.T) {
 	if !strings.HasPrefix(plus, "ctx: base\n") {
 		t.Errorf("%%+v should start with the error message")
 	}
-	if !strings.Contains(plus, "errorx_test") {
+	if !strings.Contains(plus, "errext_test") {
 		t.Errorf("%%+v should contain stack info; got: %s", plus)
 	}
 }
 
 func TestMaxStackDepthClamp(t *testing.T) {
-	old := errorx.MaxStackDepth
-	defer func() { errorx.MaxStackDepth = old }()
+	old := errext.MaxStackDepth
+	defer func() { errext.MaxStackDepth = old }()
 
-	errorx.MaxStackDepth = -1
-	err := errorx.NewError(errors.New("x"))
+	errext.MaxStackDepth = -1
+	err := errext.NewError(errors.New("x"))
 	if err == nil {
 		t.Fatal("NewError returned nil under negative MaxStackDepth")
 	}
